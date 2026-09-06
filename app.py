@@ -1,55 +1,134 @@
 import streamlit as st
+import pandas as pd
 
-st.title("🏠 AI Rental Property Analyzer")
-
-st.write(
-    "Analyze the potential profitability of a rental property."
+st.set_page_config(
+    page_title="AI Rental Property Analyzer",
+    page_icon="🏠"
 )
 
+st.title("🏠 AI Rental Property Analyzer")
+st.write("Evaluate the financial potential of a rental property.")
+
+st.header("Property Information")
+
 purchase_price = st.number_input(
-    "Purchase Price ($)",
-    min_value=0.0,
-    value=300000.0
+    "Purchase Price ($)", min_value=0.0, value=300000.0
+)
+
+down_payment = st.number_input(
+    "Down Payment ($)", min_value=0.0, value=60000.0
 )
 
 monthly_rent = st.number_input(
-    "Monthly Rent ($)",
-    min_value=0.0,
-    value=2500.0
+    "Monthly Rent ($)", min_value=0.0, value=2500.0
 )
 
 monthly_expenses = st.number_input(
-    "Monthly Expenses ($)",
-    min_value=0.0,
-    value=700.0
+    "Monthly Expenses ($)", min_value=0.0, value=700.0
+)
+
+interest_rate = st.number_input(
+    "Mortgage Interest Rate (%)", min_value=0.0, value=6.5
+)
+
+loan_years = st.number_input(
+    "Loan Term (Years)", min_value=1, value=30
 )
 
 if st.button("Analyze Property"):
 
+    loan_amount = purchase_price - down_payment
+
+    monthly_rate = interest_rate / 100 / 12
+    number_payments = loan_years * 12
+
+    if monthly_rate > 0:
+        mortgage_payment = (
+            loan_amount
+            * monthly_rate
+            * (1 + monthly_rate) ** number_payments
+            / ((1 + monthly_rate) ** number_payments - 1)
+        )
+    else:
+        mortgage_payment = loan_amount / number_payments
+
     annual_rent = monthly_rent * 12
     annual_expenses = monthly_expenses * 12
+    annual_mortgage = mortgage_payment * 12
 
-    annual_cash_flow = annual_rent - annual_expenses
+    annual_cash_flow = (
+        annual_rent
+        - annual_expenses
+        - annual_mortgage
+    )
 
     cap_rate = (
-        annual_cash_flow / purchase_price
+        (annual_rent - annual_expenses)
+        / purchase_price
     ) * 100
 
-    st.subheader("Investment Results")
+    cash_on_cash = (
+        annual_cash_flow / down_payment
+    ) * 100 if down_payment > 0 else 0
 
-    st.metric(
-        "Annual Cash Flow",
-        f"${annual_cash_flow:,.2f}"
-    )
+    st.header("📊 Investment Results")
 
-    st.metric(
-        "Cap Rate",
-        f"{cap_rate:.2f}%"
-    )
+    col1, col2 = st.columns(2)
 
-    if cap_rate >= 7:
-        st.success("Strong investment opportunity")
-    elif cap_rate >= 5:
-        st.warning("Potential investment — analyze further")
+    with col1:
+        st.metric(
+            "Monthly Mortgage",
+            f"${mortgage_payment:,.2f}"
+        )
+        st.metric(
+            "Annual Cash Flow",
+            f"${annual_cash_flow:,.2f}"
+        )
+
+    with col2:
+        st.metric(
+            "Cap Rate",
+            f"{cap_rate:.2f}%"
+        )
+        st.metric(
+            "Cash-on-Cash Return",
+            f"{cash_on_cash:.2f}%"
+        )
+
+    if cash_on_cash >= 8:
+        st.success("🟢 Strong potential investment")
+    elif cash_on_cash >= 4:
+        st.warning("🟡 Moderate investment — analyze further")
     else:
-        st.error("Weak investment based on these numbers")
+        st.error("🔴 Weak cash flow based on these assumptions")
+
+    st.header("📈 10-Year Projection")
+
+    years = []
+    cash_flows = []
+    cumulative_cash_flow = []
+
+    total = 0
+
+    for year in range(1, 11):
+        total += annual_cash_flow
+
+        years.append(year)
+        cash_flows.append(annual_cash_flow)
+        cumulative_cash_flow.append(total)
+
+    projection = pd.DataFrame({
+        "Year": years,
+        "Annual Cash Flow": cash_flows,
+        "Cumulative Cash Flow": cumulative_cash_flow
+    })
+
+    st.dataframe(projection, use_container_width=True)
+
+    st.subheader("Cumulative Cash Flow")
+
+    chart_data = projection.set_index("Year")[
+        ["Cumulative Cash Flow"]
+    ]
+
+    st.line_chart(chart_data)
