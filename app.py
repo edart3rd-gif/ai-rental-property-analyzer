@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+import os
+from openai import OpenAI
 
 st.set_page_config(
     page_title="AI Rental Property Analyzer",
@@ -132,3 +134,43 @@ if st.button("Analyze Property"):
     ]
 
     st.line_chart(chart_data)
+    st.header("🤖 AI Investment Analysis")
+
+if st.button("Generate AI Analysis"):
+
+    prompt = f"""
+    Analyze this rental property as a real estate investment.
+
+    Purchase price: ${purchase_price:,.0f}
+    Down payment: ${down_payment:,.0f}
+    Monthly rent: ${monthly_rent:,.0f}
+    Monthly expenses: ${monthly_expenses:,.0f}
+    Mortgage payment: ${mortgage_payment:,.0f}
+    Annual cash flow: ${annual_cash_flow:,.0f}
+    Cap rate: {cap_rate:.2f}%
+    Cash-on-cash return: {cash_on_cash:.2f}%
+
+    Explain:
+    1. Whether the property appears financially attractive.
+    2. The biggest risks.
+    3. What the investor should investigate.
+    4. Give a final recommendation.
+
+    Do not present this as financial advice.
+    """
+
+    try:
+        client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+
+        response = client.responses.create(
+            model="gpt-5",
+            input=prompt
+        )
+
+        st.write(response.output_text)
+
+    except Exception:
+        st.warning(
+            "AI analysis is not configured yet. "
+            "The financial calculations are still available."
+        )
