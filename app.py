@@ -123,10 +123,10 @@ Do not present this as financial advice.
 """
 
         try:
-            client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+            client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
             response = client.chat.completions.create(
-                model="gpt-4o-mini",          # or "gpt-4o"
-                messages=[{"role": "user", "content": prompt}]
+            model="gpt-4o-mini",          # or "gpt-4o"
+            messages=[{"role": "user", "content": prompt}]
             )
             st.write(response.choices[0].message.content)
 
