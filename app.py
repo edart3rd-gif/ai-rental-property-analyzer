@@ -96,10 +96,8 @@ if "results" in st.session_state:
 st.header("🤖 AI Investment Analysis")
 
 if st.button("Generate AI Analysis"):
-    st.write("✅ AI button was clicked")
-
     if "results" not in st.session_state:
-        st.warning("Please click Analyze Property first.")
+        st.warning("Please click **Analyze Property** first.")
     else:
         r = st.session_state["results"]
 
@@ -125,8 +123,6 @@ Do not present this as financial advice.
 """
 
         try:
-            st.write("🔄 Connecting to AI...")
-
             client = OpenAI(
                 api_key=st.secrets["OPENAI_API_KEY"]
             )
@@ -141,9 +137,8 @@ Do not present this as financial advice.
                 ]
             )
 
-            st.success("✅ AI responded")
             st.write(response.choices[0].message.content)
 
         except Exception as e:
-            st.error("❌ AI request failed")
-            st.code(str(e))
+            st.error("AI analysis could not be generated.")
+            st.caption(f"Error details: {e}")
